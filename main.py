@@ -26,6 +26,9 @@ txt = tool.image_to_string(
     builder=pyocr.builders.TextBuilder()
 )
 
+# newlines are not handled properly so just join all the lines
+txt = ' '.join([line.strip() for line in txt.split('\n')])
+
 if args.src is not None:
     text = Translator().translate(txt, dest=args.dest, src=args.src).text
 else:
