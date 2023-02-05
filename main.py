@@ -7,11 +7,22 @@ import pyocr.builders
 import pyscreenshot
 import argostranslate.package
 import argostranslate.translate
-import PySimpleGUI as sg
+import gi
+
+gi.require_version("Gtk", "3.0")
+
+has_layer_shell = False
+try:
+    gi.require_version("GtkLayerShell", "0.1")
+    has_layer_shell = True
+except:
+    pass
+
+from gi.repository import Gtk, Gdk, GLib, GtkLayerShell
 
 parser = argparse.ArgumentParser(description='Translate selected text.')
 parser.add_argument('--box', metavar=('x', 'y', 'w', 'h'), type=int, nargs=4, help='left top/left bottom corners and width/height of translated box')
-parser.add_argument('--src', metavar='src', type=str, nargs='?', help='source language to translate from')
+parser.add_argument('--src', metavar='src', type=str, required=True, help='source language to translate from')
 parser.add_argument('--dest', metavar='dest', action='store', type=str, default='en', help='destination language to translate to')
 
 args = parser.parse_args()
@@ -38,20 +49,34 @@ package_to_install = next(
     )
 )
 if package_to_install is None:
-    print("Not found language package for {} -> {}".format(args.src, args.dest))
+    print('Not found language package for {} -> {}'.format(args.src, args.dest))
     exit(1)
 
 if package_to_install not in argostranslate.package.get_installed_packages():
+    print('Installing package: {}'.format(package_to_install))
     argostranslate.package.install_from_path(package_to_install.download())
 
-# Translate
 text = argostranslate.translate.translate(txt, args.src, args.dest)
 
-sg.popup(text,
-         title='onscreen-translate-py',
-         auto_close=True,
-         auto_close_duration=3,
-         no_titlebar=True,
-         keep_on_top=True,
-         any_key_closes=True,
-         button_type=sg.POPUP_BUTTONS_NO_BUTTONS)
+win = Gtk.Window(title='onscreen-translate-py')
+Gtk.Widget.set_opacity(win, 0.95)
+win.set_type_hint(Gdk.WindowTypeHint.TOOLTIP)
+
+if has_layer_shell:
+    GtkLayerShell.init_for_window(win)
+    GtkLayerShell.auto_exclusive_zone_enable(win)
+    GtkLayerShell.set_layer(win, GtkLayerShell.Layer.OVERLAY)
+
+label = Gtk.Label(label=text)
+label.set_margin_top(40)
+label.set_margin_bottom(40)
+label.set_margin_start(40)
+label.set_margin_end(40)
+win.add(label)
+
+win.connect("destroy", Gtk.main_quit)
+win.show_all()
+
+GLib.timeout_add(3000, Gtk.Window.destroy, win)
+
+Gtk.main()
