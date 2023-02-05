@@ -1,4 +1,5 @@
 from sys import argv
+from textwrap import wrap
 
 import argparse
 from PIL import Image
@@ -57,6 +58,7 @@ if package_to_install not in argostranslate.package.get_installed_packages():
     argostranslate.package.install_from_path(package_to_install.download())
 
 text = argostranslate.translate.translate(txt, args.src, args.dest)
+text = '\n'.join(wrap(text, 60))
 
 win = Gtk.Window(title='onscreen-translate-py')
 Gtk.Widget.set_opacity(win, 0.95)
