@@ -1,5 +1,5 @@
 googletrans==3.0.0
 Pillow==9.4.0
-pyocr==0.8.4.dev0+g920b071.d20220703
+pyocr==0.8.3
 pyscreenshot==3.0
 PySimpleGUI==4.60.4
