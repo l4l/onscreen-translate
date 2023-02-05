@@ -11,7 +11,7 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [macos-latest, ubuntu-latest, windows-latest]
+        os: [macos-latest, ubuntu-latest]
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -28,7 +28,6 @@ jobs:
         with:
           script-name: main.py
           access-token: ${{ secrets.NUITKA_COMMERCIAL_ACCESS_TOKEN }}
-          onefile: true
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
         with:
