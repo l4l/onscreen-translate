@@ -10,6 +10,10 @@ import argostranslate.package
 import argostranslate.translate
 import gi
 
+# word/minute = 240, avg word size = 4.7
+# -> chars/second = 4.7 * 240 / 60 ≈ 19
+READING_CHARS_PER_SECOND = 19
+
 gi.require_version("Gtk", "3.0")
 
 has_layer_shell = False
@@ -58,6 +62,7 @@ if package_to_install not in argostranslate.package.get_installed_packages():
     argostranslate.package.install_from_path(package_to_install.download())
 
 text = argostranslate.translate.translate(txt, args.src, args.dest)
+symbols = len(text)
 text = '\n'.join(wrap(text, 60))
 
 win = Gtk.Window(title='onscreen-translate-py')
@@ -79,6 +84,6 @@ win.add(label)
 win.connect("destroy", Gtk.main_quit)
 win.show_all()
 
-GLib.timeout_add(3000, Gtk.Window.destroy, win)
+GLib.timeout_add((1 + symbols / READING_CHARS_PER_SECOND) * 1000 // 1, Gtk.Window.destroy, win)
 
 Gtk.main()
