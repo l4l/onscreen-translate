@@ -87,6 +87,7 @@ if has_layer_shell:
     GtkLayerShell.init_for_window(win)
     GtkLayerShell.auto_exclusive_zone_enable(win)
     GtkLayerShell.set_layer(win, GtkLayerShell.Layer.OVERLAY)
+    GtkLayerShell.set_keyboard_mode(win, GtkLayerShell.KeyboardMode.EXCLUSIVE)
 
 label = Gtk.Label(label=text)
 label.set_use_markup(True)
@@ -98,6 +99,9 @@ label.set_margin_end(40)
 win.add(label)
 
 win.connect("destroy", Gtk.main_quit)
+win.connect("button-release-event", Gtk.main_quit)
+win.connect("key-release-event", Gtk.main_quit)
+
 win.show_all()
 
 GLib.timeout_add((1 + symbols / READING_CHARS_PER_SECOND) * 1000 // 1, Gtk.Window.destroy, win)
