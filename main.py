@@ -29,9 +29,14 @@ parser = argparse.ArgumentParser(description='Translate selected text.')
 parser.add_argument('--box', metavar=('x', 'y', 'w', 'h'), type=int, nargs=4, help='left top/left bottom corners and width/height of translated box')
 parser.add_argument('--src', metavar='src', type=str, required=True, help='source language to translate from')
 parser.add_argument('--dest', metavar='dest', action='store', type=str, default='en', help='destination language to translate to')
+parser.add_argument('--css-style', metavar='path', type=str, nargs='?', help='path to css styles')
 
 args = parser.parse_args()
 
+css = None
+if args.css_style:
+    with open(args.css_style, 'r') as f:
+        css = f.read()
 
 [x, y, dx, dy] = args.box
 img = pyscreenshot.grab(bbox=(x, y, x + dx, y + dy))
@@ -69,12 +74,22 @@ win = Gtk.Window(title='onscreen-translate-py')
 Gtk.Widget.set_opacity(win, 0.95)
 win.set_type_hint(Gdk.WindowTypeHint.TOOLTIP)
 
+if css:
+    css_provider = Gtk.CssProvider()
+    css_provider.load_from_data(css.encode())
+    context = Gtk.StyleContext()
+    screen = Gdk.Screen.get_default()
+    context.add_provider_for_screen(screen, css_provider,
+                                    Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+
 if has_layer_shell:
     GtkLayerShell.init_for_window(win)
     GtkLayerShell.auto_exclusive_zone_enable(win)
     GtkLayerShell.set_layer(win, GtkLayerShell.Layer.OVERLAY)
 
 label = Gtk.Label(label=text)
+label.set_use_markup(True)
+label.set_name("translate_label")
 label.set_margin_top(40)
 label.set_margin_bottom(40)
 label.set_margin_start(40)
