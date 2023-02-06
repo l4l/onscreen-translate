@@ -56,7 +56,8 @@ available_packages = argostranslate.package.get_available_packages()
 package_to_install = next(
     filter(
         lambda x: x.from_code == args.src and x.to_code == args.dest, available_packages
-    )
+    ),
+    None
 )
 if package_to_install is None:
     print('Not found language package for {} -> {}'.format(args.src, args.dest))
