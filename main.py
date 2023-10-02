@@ -1,14 +1,13 @@
-from sys import argv
 from textwrap import wrap
 
 import argparse
-from PIL import Image
 import pyocr
 import pyocr.builders
 import pyscreenshot
 import argostranslate.package
 import argostranslate.translate
 import gi
+from langcodes import Language
 
 # word/minute = 240, avg word size = 4.7
 # -> chars/second = 4.7 * 240 / 60 ≈ 19
@@ -41,10 +40,13 @@ if args.css_style:
 [x, y, dx, dy] = args.box
 img = pyscreenshot.grab(bbox=(x, y, x + dx, y + dy))
 
+src_lang = Language.get(args.src)
+dst_lang = Language.get(args.dest)
+
 tool = pyocr.get_available_tools()[0]
 txt = tool.image_to_string(
     img,
-    lang='eng',
+    lang=src_lang.to_alpha3(),
     builder=pyocr.builders.TextBuilder()
 )
 
@@ -53,21 +55,21 @@ txt = ' '.join([line.strip() for line in txt.split('\n')])
 
 argostranslate.package.update_package_index()
 available_packages = argostranslate.package.get_available_packages()
-package_to_install = next(
-    filter(
-        lambda x: x.from_code == args.src and x.to_code == args.dest, available_packages
-    ),
-    None
-)
-if package_to_install is None:
-    print('Not found language package for {} -> {}'.format(args.src, args.dest))
+packages_to_install = [p for p in available_packages
+                       if p.from_code == src_lang.language and p.to_code == dst_lang.language or
+                       # Translation pairs X->Y where `en not in [X, Y]` could only be translated X -> en, en -> Y
+                       p.from_code == src_lang.language and p.to_code == 'en' and dst_lang.language != 'en' or
+                       p.from_code == 'en' and src_lang.language != 'eng' and p.to_code == dst_lang.language]
+if len(packages_to_install) == 0:
+    print('Not found language package for {} -> {}'.format(src_lang, dst_lang))
     exit(1)
 
-if package_to_install not in argostranslate.package.get_installed_packages():
-    print('Installing package: {}'.format(package_to_install))
-    argostranslate.package.install_from_path(package_to_install.download())
+for p in packages_to_install:
+    if p not in argostranslate.package.get_installed_packages():
+        print('Installing package: {}'.format(p))
+        argostranslate.package.install_from_path(p.download())
 
-text = argostranslate.translate.translate(txt, args.src, args.dest)
+text = argostranslate.translate.translate(txt, src_lang.language, dst_lang.language)
 symbols = len(text)
 text = '\n'.join(wrap(text, 60))
 
