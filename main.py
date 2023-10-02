@@ -26,9 +26,10 @@ from gi.repository import Gtk, Gdk, GLib, GtkLayerShell
 
 parser = argparse.ArgumentParser(description='Translate selected text.')
 parser.add_argument('--box', metavar=('x', 'y', 'w', 'h'), type=int, nargs=4, help='left top/left bottom corners and width/height of translated box')
-parser.add_argument('--src', metavar='src', type=str, required=True, help='source language to translate from')
-parser.add_argument('--dest', metavar='dest', action='store', type=str, default='en', help='destination language to translate to')
+parser.add_argument('--src', metavar='source', type=str, required=True, help='language to translate from')
+parser.add_argument('--dest', metavar='destination', action='store', type=str, default='en', help='language to translate to')
 parser.add_argument('--css-style', metavar='path', type=str, nargs='?', help='path to css styles')
+parser.add_argument('--read-speed', metavar='speed', action='store', type=int, default=READING_CHARS_PER_SECOND, help='average chars/sec reading speed for calculating popup display time')
 
 args = parser.parse_args()
 
@@ -42,6 +43,8 @@ img = pyscreenshot.grab(bbox=(x, y, x + dx, y + dy))
 
 src_lang = Language.get(args.src)
 dst_lang = Language.get(args.dest)
+
+speed = args.read_speed
 
 tool = pyocr.get_available_tools()[0]
 txt = tool.image_to_string(
@@ -106,6 +109,6 @@ win.connect("key-release-event", Gtk.main_quit)
 
 win.show_all()
 
-GLib.timeout_add((1 + symbols / READING_CHARS_PER_SECOND) * 1000 // 1, Gtk.Window.destroy, win)
+GLib.timeout_add((1 + symbols / speed) * 1000 // 1, Gtk.Window.destroy, win)
 
 Gtk.main()
